@@ -59,6 +59,43 @@ def runGame(ccgame, agents):
         print('stuck!')
         return 0
 
+def runGame_vir(ccgame, agents):
+    state = ccgame.startState()
+    print(state)
+    max_iter = 200  # deal with some stuck situations
+    iter = 0 
+    start = datetime.datetime.now()
+    while (not ccgame.isEnd(state, iter)) and iter < max_iter:
+        iter += 1
+        '''
+        board.board = state[1]
+        board.draw()
+        board.update_idletasks()
+        board.update()
+        '''
+
+        player = ccgame.player(state)
+        agent = agents[player]
+        # function agent.getAction() modify class member action
+        timeout(agent.getAction, state)
+        legal_actions = ccgame.actions(state)
+        if agent.action not in legal_actions:
+            agent.action = random.choice(legal_actions)
+        state = ccgame.succ(state, agent.action)
+    '''
+    board.board = state[1]
+    board.draw()
+    board.update_idletasks()
+    board.update()
+    '''
+    time.sleep(0.1)
+
+    end = datetime.datetime.now()
+    if ccgame.isEnd(state, iter):
+        return state[1].isEnd(iter)[1]  # return winner
+    else:  # stuck situation
+        print('stuck!')
+        return 0
 
 def simulateMultipleGames(agents_dict, simulation_times, ccgame):
     win_times_P1 = 0
@@ -81,21 +118,26 @@ def simulateMultipleGames(agents_dict, simulation_times, ccgame):
     print('Tie times:', tie_times)
 
 def callback(ccgame):
-    B.destroy()
+    #B.destroy()
     simpleGreedyAgent = SimpleGreedyAgent(ccgame)
     simpleGreedyAgent1 = SimpleGreedyAgent(ccgame)
     randomAgent = RandomAgent(ccgame)
     teamAgent = TeamNameMinimaxAgent(ccgame)
+    teamAgent.HeruUpdate(0, 0)
     teamAgent1 = TeamNameMinimaxAgent(ccgame)
-    simulateMultipleGames({1: teamAgent, 2: simpleGreedyAgent}, 10, ccgame)
+    teamAgent1.HeruUpdate(0, 0)
+    simulateMultipleGames({1: simpleGreedyAgent, 2: teamAgent}, 5, ccgame)
    
 
 
 if __name__ == '__main__':
+    
     ccgame = ChineseChecker(10, 4)
     root = tk.Tk()
     board = GameBoard(root,ccgame.size,ccgame.size * 2 - 1,ccgame.board)
     board.pack(side="top", fill="both", expand="true", padx=4, pady=4)
-    B = tk.Button(board, text="Start", command = lambda: callback(ccgame=ccgame))
-    B.pack()
+    #B = tk.Button(board, text="Start", command = lambda: callback(ccgame=ccgame))
+    callback(ccgame=ccgame)
+    #B.pack()
     root.mainloop()
+    

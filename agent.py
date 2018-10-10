@@ -1,5 +1,6 @@
 import random, re, datetime
 import numpy as np
+import math
 
 
 class Agent(object):
@@ -37,6 +38,9 @@ class SimpleGreedyAgent(Agent):
 
 class TeamNameMinimaxAgent(Agent):
     step = 0
+    a = 1
+    b = 0
+    c = 0
 
     def getAction(self, state):
         legal_actions = self.game.actions(state)
@@ -44,10 +48,10 @@ class TeamNameMinimaxAgent(Agent):
 
         player = self.game.player(state)
         ### START CODE HERE ###
-        if TeamNameMinimaxAgent.step < 3:
+        if self.step < 3:
             #begin
             self.action = self.startAction(state, player)
-            TeamNameMinimaxAgent.step += 1
+            self.step += 1
         else:
             #minimax
             value = self.max_value(state, player, float('-inf'), float('inf'), 0)
@@ -59,7 +63,7 @@ class TeamNameMinimaxAgent(Agent):
 
     def max_value(self, state, player, a, b, t):
         #depth
-        if t == 1:
+        if t == 2:
             return self.Heru(state, player), None
         v = float('-inf')
         next_t = t + 1
@@ -72,7 +76,7 @@ class TeamNameMinimaxAgent(Agent):
                 next_e = e - de
             '''
             next_state = self.game.succ(state, action)
-            value = self.min_value(next_state, 3 - player, a, b, next_t)
+            value = self.min_value(next_state, player, a, b, next_t)
             if value[0] > v :
                 Action = action
                 v = value[0]
@@ -83,7 +87,7 @@ class TeamNameMinimaxAgent(Agent):
 
     def min_value(self, state, player, a, b, t):
         #depth
-        if t == 1:
+        if t == 2:
             return self.Heru(state, player), None
         v = float('inf')
         next_t = t + 1
@@ -96,7 +100,7 @@ class TeamNameMinimaxAgent(Agent):
                 next_e = e - de
             '''
             next_state = self.game.succ(state, action)
-            value = self.max_value(next_state, 3 - player, a, b, next_t)
+            value = self.max_value(next_state, player, a, b, next_t)
             if value[0] < v :
                 Action = action
                 v = value[0]
@@ -105,19 +109,25 @@ class TeamNameMinimaxAgent(Agent):
             a = min(b, v) 
         return v, Action
 
+    
+
+
     def Heru (self, state, player):
-        a = 1
-        b = 0
-        c = 0
-        if player == 1:
-            a = -a
+        #a = 1
+        #b = 0
+        #c = 0
+        #if player == 1:
+        #    self.a = -self.a
         #distance = 0
         #board = []
         vertical = np.zeros((10,))
+        vertical_op = np.zeros((10,))
         horizontal = np.zeros_like(vertical)
+        horizontal_op = np.zeros_like(vertical_op)
         cnt = 0
+        cnt_op = 0
         for point,val in state[1].board_status.items():
-            if val == player:
+            if val == 1:
                 vertical[cnt]=point[0]
                 
                 if point[0]<=10:
@@ -127,6 +137,16 @@ class TeamNameMinimaxAgent(Agent):
                     #board.append((point[0],point[0]+2*point[1]-20))
                     horizontal[cnt] =  point[0]+2*point[1]-20
                 cnt+=1
+            elif val == 2:
+                vertical_op[cnt_op]=point[0]
+                
+                if point[0]<=10:
+                    #board.append((point[0],2*point[1]-point[0]))
+                    horizontal_op[cnt_op] =  2*point[1]-point[0]
+                else:
+                    #board.append((point[0],point[0]+2*point[1]-20))
+                    horizontal_op[cnt_op] =  point[0]+2*point[1]-20
+                cnt_op+=1
         '''
         for p in point:
             if player==2:
@@ -134,12 +154,47 @@ class TeamNameMinimaxAgent(Agent):
             else:
                 distance += (p[0]-19)**2+(p[1]-19)**2
         '''
-        ave_vert = np.sum(vertical)/10
+        '''
+        ave_vert = 19 - np.sum(vertical)/10
         variance = np.dot((vertical-ave_vert),(vertical-ave_vert).T)/10
         ave_hori = np.sum(horizontal)/10
         variance_hori = np.dot((horizontal-ave_hori),(horizontal-ave_hori).T)/10
-        eval = a * ave_vert - b * variance_hori - c * variance 
+        ave_vert_op = np.sum(vertical_op)/10
+        variance_op = np.dot((vertical_op-ave_vert_op),(vertical_op-ave_vert_op).T)/10
+        ave_hori_op = np.sum(horizontal_op)/10
+        variance_hori_op = np.dot((horizontal_op-ave_hori_op),(horizontal_op-ave_hori_op).T)/10
+        eval = self.a*(ave_vert-ave_vert_op)-self.b*(variance_hori-variance_hori_op)-self.c*(variance-variance_op)
+        if player==2:
+            eval = -eval
+        '''
+        if player == 1:
+            ave_vert = 19 - np.sum(vertical)/10
+            variance = np.dot((vertical-ave_vert),(vertical-ave_vert).T)/10
+            variance = math.sqrt(variance)
+            ave_hori = np.sum(horizontal)/10
+            variance_hori = np.dot((horizontal-ave_hori),(horizontal-ave_hori).T)/10
+            variance_hori = math.sqrt(variance_hori)
+            ave_vert_op = np.sum(vertical_op)/10
+            eval = self.a*(ave_vert-ave_vert_op)-self.b*variance_hori-self.c*variance
+        else:
+            ave_vert = 19 - np.sum(vertical)/10
+            #variance = np.dot((vertical-ave_vert),(vertical-ave_vert).T)/10
+            #ave_hori = np.sum(horizontal)/10
+            #variance_hori = np.dot((horizontal-ave_hori),(horizontal-ave_hori).T)/10
+            ave_vert_op = np.sum(vertical_op)/10
+            variance_op = np.dot((vertical_op-ave_vert_op),(vertical_op-ave_vert_op).T)/10
+            variance_op = math.sqrt(variance_op)
+            ave_hori_op = np.sum(horizontal_op)/10
+            variance_hori_op = np.dot((horizontal_op-ave_hori_op),(horizontal_op-ave_hori_op).T)/10
+            variance_hori_op = math.sqrt(variance_hori_op)
+            eval = self.a*(ave_vert_op-ave_vert)- self.b*variance_hori_op-self.c*variance_op
         return eval
+
+
+    def HeruUpdate(self, b, c):
+        #self.a = a
+        self.b = b
+        self.c = c
 
     def startAction(self, state, player):
         #pattens people usually follow at the beginning of the game
