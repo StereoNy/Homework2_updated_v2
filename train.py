@@ -14,7 +14,7 @@ from gaft.operators import FlipBitBigMutation
 from gaft.analysis.fitness_store import FitnessStore
 from gaft.analysis.console_output import ConsoleOutput
 
-indv_template = BinaryIndividual(ranges=[(0, 1), (0, 1)], eps=0.001)
+indv_template = BinaryIndividual(ranges=[(0, 0.6),(0,0.01)], eps=0.001)
 population = Population(indv_template=indv_template, size=30).init()
 
 # Create genetic operators.
@@ -32,28 +32,28 @@ engine = GAEngine(population=population, selection=selection,
 # Define fitness function.
 @engine.fitness_register
 def fitness(indv):
-    y, z = indv.solution
-    
+    y,z= indv.solution
+    print(y,z)
     ccgame = ChineseChecker(10, 4)
     simpleGreedyAgent = SimpleGreedyAgent(ccgame)
     randomAgent = RandomAgent(ccgame)
     teamAgent = TeamNameMinimaxAgent(ccgame)
-    teamAgent.HeruUpdate(y,z)
+    teamAgent.HeruDefine(y,z)
     agents_dict_1 = {1: teamAgent, 2: simpleGreedyAgent}
     agents_dict_2 = {1: teamAgent, 2: randomAgent}
     win_times_P1 = 0
     win_times_P2 = 0
     tie_times = 0
-    for i in range(4):
+    for i in range(10):
         run_result = runGame_vir(ccgame, agents_dict_1)
-        print(run_result)
+        #print(run_result)
         if run_result == 1:
             win_times_P1 += 1
         elif run_result == 2:
             win_times_P2 += 1
         elif run_result == 0:
             tie_times += 1
-    
+    '''
     run_result = runGame_vir(ccgame, agents_dict_2)
     print(run_result)
     if run_result == 1:
@@ -62,11 +62,11 @@ def fitness(indv):
         win_times_P2 += 1
     elif run_result == 0:
         tie_times += 1
-
-    rate = win_times_P1 / 5
+    '''
+    rate = win_times_P1 / 10
     print("win rate:", rate)
     return rate
 
 if '__main__' == __name__:
     print("hello")
-    engine.run(ng=8)
+    engine.run(ng=10)
